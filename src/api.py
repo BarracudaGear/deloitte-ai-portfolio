@@ -1,4 +1,4 @@
-"""FastAPI service serving the demand forecasting and fraud detection models."""
+"""FastAPI service serving the demand forecasting, fraud detection models, and multi-agent document analyst."""
 
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -6,6 +6,9 @@ import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
+
+# LangGraph agent
+from src.agent_analyst import app as document_analyst
 
 MODEL_DIR = Path("./models")
 DEMAND_MODEL_PATH = MODEL_DIR / "supply_chain_xgb.joblib"
@@ -59,6 +62,9 @@ class FraudResponse(BaseModel):
     anomaly_score: float
     is_anomaly: bool
 
+class DocumentRequest(BaseModel):
+    document_text: str
+
 # ---------- Endpoints ----------
 @app.get("/health")
 def health():
@@ -66,6 +72,7 @@ def health():
         "status": "ok",
         "demand_model_loaded": "demand" in models,
         "fraud_model_loaded": "fraud" in models,
+        "document_analyst_ready": True,
     }
 
 @app.post("/predict/demand", response_model=DemandResponse)
@@ -88,11 +95,32 @@ def predict_fraud(req: FraudRequest):
     features = artifact["feature_cols"]
     data = req.model_dump()
     df = pd.DataFrame([data])[features].fillna(0)
-    # decision_function: lower = more anomalous
     score = float(model.decision_function(df)[0])
     raw_pred = int(model.predict(df)[0])
     is_anomaly = raw_pred == -1
     return FraudResponse(anomaly_score=score, is_anomaly=is_anomaly)
+
+@app.post("/analyze/document")
+def analyze_document(req: DocumentRequest):
+    """Run the multi-agent LangGraph document analyst."""
+    initial_state = {
+        "document_text": req.document_text,
+        "doc_type": "unknown",
+        "extracted_entities": {},
+        "risk_findings": [],
+        "compliance_status": "",
+        "final_report": "",
+        "audit_trail": [],
+    }
+    result = document_analyst.invoke(initial_state)
+    return {
+        "doc_type": result.get("doc_type"),
+        "extracted_entities": result.get("extracted_entities"),
+        "risk_findings": result.get("risk_findings"),
+        "compliance_status": result.get("compliance_status"),
+        "final_report": result.get("final_report"),
+        "audit_trail": result.get("audit_trail"),
+    }
 
 if __name__ == "__main__":
     import uvicorn
