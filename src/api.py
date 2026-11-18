@@ -1,4 +1,4 @@
-"""FastAPI service serving the demand forecasting, fraud detection models, and multi-agent document analyst."""
+"""FastAPI service for enterprise AI portfolio: forecasting, fraud detection, document analysis, and security gateway."""
 
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -7,15 +7,17 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-# LangGraph agent
+# Existing components
 from src.agent_analyst import app as document_analyst
+from src.guardrails import EnterpriseSecurityGateway
 
 MODEL_DIR = Path("./models")
 DEMAND_MODEL_PATH = MODEL_DIR / "supply_chain_xgb.joblib"
 FRAUD_MODEL_PATH = MODEL_DIR / "fraud_iforest.joblib"
 
-# Global model holders
+# Global holders
 models = {}
+gateway = EnterpriseSecurityGateway()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -34,7 +36,7 @@ async def lifespan(app: FastAPI):
     yield
     models.clear()
 
-app = FastAPI(title="Deloitte AI Portfolio API", lifespan=lifespan)
+app = FastAPI(title="Enterprise AI Portfolio API", lifespan=lifespan)
 
 # ---------- Schemas ----------
 class DemandRequest(BaseModel):
@@ -65,6 +67,9 @@ class FraudResponse(BaseModel):
 class DocumentRequest(BaseModel):
     document_text: str
 
+class ChatRequest(BaseModel):
+    message: str
+
 # ---------- Endpoints ----------
 @app.get("/health")
 def health():
@@ -73,6 +78,7 @@ def health():
         "demand_model_loaded": "demand" in models,
         "fraud_model_loaded": "fraud" in models,
         "document_analyst_ready": True,
+        "security_gateway_ready": True,
     }
 
 @app.post("/predict/demand", response_model=DemandResponse)
@@ -102,7 +108,7 @@ def predict_fraud(req: FraudRequest):
 
 @app.post("/analyze/document")
 def analyze_document(req: DocumentRequest):
-    """Run the multi-agent LangGraph document analyst."""
+    """Run the multi-agent document analyst."""
     initial_state = {
         "document_text": req.document_text,
         "doc_type": "unknown",
@@ -120,6 +126,45 @@ def analyze_document(req: DocumentRequest):
         "compliance_status": result.get("compliance_status"),
         "final_report": result.get("final_report"),
         "audit_trail": result.get("audit_trail"),
+    }
+
+@app.post("/gateway/chat")
+def gateway_chat(req: ChatRequest):
+    """Security gateway: input guardrails → safe routing → output redaction."""
+    input_check = gateway.check_input(req.message)
+
+    if input_check["blocked"]:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "Request blocked by enterprise security gateway",
+                "reasons": input_check["reasons"],
+                "action": "BLOCKED",
+                "latency_ms": input_check["latency_ms"],
+            },
+        )
+
+    # Safe path: simple echo / placeholder routing to existing analysis logic
+    # In production this would call the appropriate model or agent
+    raw_response = (
+        f"Processed enterprise query safely. "
+        f"Message length: {len(req.message)}. "
+        f"No unauthorized topics or injection patterns detected."
+    )
+
+    redacted_response, pii_types = gateway.redact_pii(raw_response)
+    # Also redact the original message for the audit log
+    _, input_pii = gateway.redact_pii(req.message)
+
+    return {
+        "response": redacted_response,
+        "security_audit": {
+            "input_action": input_check["action"],
+            "input_latency_ms": input_check["latency_ms"],
+            "output_pii_redacted": pii_types,
+            "input_pii_detected": input_pii,
+            "status": "ALLOWED",
+        },
     }
 
 if __name__ == "__main__":
