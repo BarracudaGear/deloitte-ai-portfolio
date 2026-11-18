@@ -43,7 +43,7 @@ class EnterpriseSecurityGateway:
     # Topic boundary: blocked intents
     BLOCKED_TOPICS = [
         r"\b(buy|sell|invest|stock tip|guaranteed return)\b",
-        r"exfiltrate|dump (the |all )?data|send (all|customer) data to",
+        r"exfiltrat|export all|send all|dump all|external|webhook|http|customer list|database|uploade|dump (the |all )?data|send (all|customer) data to",
         r"\b(hate|kill|bomb|terror)\b",
     ]
 
@@ -77,7 +77,7 @@ class EnterpriseSecurityGateway:
 
         for pattern in self.blocked_re:
             if pattern.search(text):
-                reasons.append("unauthorized_topic_or_exfiltration")
+                reasons.append("unauthorized_topic_or_exfiltrat|export all|send all|dump all|external|webhook|http|customer list|database|uploadion")
                 break
 
         latency_ms = (time.perf_counter() - start) * 1000
