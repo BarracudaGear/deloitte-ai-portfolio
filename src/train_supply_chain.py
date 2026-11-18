@@ -81,14 +81,14 @@ def main():
         model.fit(X_train, y_train)
 
         preds = model.predict(X_test)
-        rmse = mean_squared_error(y_test, preds, squared=False)
+        rmse = mean_squared_error(y_test, preds) ** 0.5
         mae = mean_absolute_error(y_test, preds)
 
         mlflow.log_param("n_estimators", 200)
         mlflow.log_param("max_depth", 6)
         mlflow.log_metric("rmse", rmse)
         mlflow.log_metric("mae", mae)
-        mlflow.sklearn.log_model(model, "model")
+        # mlflow.sklearn.log_model(model, "model")
 
         print(f"RMSE: {rmse:.2f} | MAE: {mae:.2f}")
 

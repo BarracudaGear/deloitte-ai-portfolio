@@ -84,7 +84,7 @@ def main():
         mlflow.log_param("contamination", 0.0015)
         mlflow.log_metric("precision", precision)
         mlflow.log_metric("recall", recall)
-        mlflow.sklearn.log_model(model, "model")
+        # mlflow.sklearn.log_model(model, "model")
 
         print(f"Precision: {precision:.4f} | Recall: {recall:.4f}")
 
