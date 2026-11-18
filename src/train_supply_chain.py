@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from xgboost import XGBRegressor
 
-DB_PATH = Path("./data/deloitte_portfolio.db")
+DB_PATH = Path("./data/enterprise_ops.db")
 MODEL_DIR = Path("./models")
 MODEL_PATH = MODEL_DIR / "supply_chain_xgb.joblib"
 

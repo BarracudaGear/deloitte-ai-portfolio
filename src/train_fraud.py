@@ -10,7 +10,7 @@ from sklearn.ensemble import IsolationForest
 from sklearn.metrics import precision_score, recall_score
 from sklearn.model_selection import train_test_split
 
-DB_PATH = Path("./data/deloitte_portfolio.db")
+DB_PATH = Path("./data/enterprise_ops.db")
 MODEL_DIR = Path("./models")
 MODEL_PATH = MODEL_DIR / "fraud_iforest.joblib"
 SAMPLE_SIZE = 200_000

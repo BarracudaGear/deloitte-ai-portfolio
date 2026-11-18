@@ -4,7 +4,7 @@ import sqlite3
 from pathlib import Path
 import pandas as pd
 
-DB_PATH = Path("./data/deloitte_portfolio.db")
+DB_PATH = Path("./data/enterprise_ops.db")
 RAW_BASE = Path("./data/raw")
 
 def clean_and_load(csv_path: Path, table_name: str, conn: sqlite3.Connection,
