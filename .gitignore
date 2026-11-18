@@ -22,3 +22,7 @@ node_modules/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Models and MLflow
+models/*.joblib
+mlruns/
